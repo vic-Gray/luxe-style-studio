@@ -1,3 +1,8 @@
+
+<img width="1366" height="648" alt="Screenshot From 2026-09-01 17-36-07" src="https://github.com/user-attachments/assets/4eb84e81-bb91-4150-8925-5a3404201337" />
+
+
+
 # Matteekay
 
 Matteekay is a **full-stack fashion studio platform** with a **React/Vite frontend** and a **NestJS backend**.  
