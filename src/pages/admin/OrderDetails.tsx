@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { MapPin } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
 const OrderDetails = () => {
@@ -62,6 +63,11 @@ const OrderDetails = () => {
       </AdminLayout>
     );
   }
+
+  const hasLocation =
+    order.location &&
+    typeof order.location.lat === "number" &&
+    typeof order.location.lng === "number";
 
   return (
     <AdminLayout>
@@ -142,12 +148,45 @@ const OrderDetails = () => {
                 "N/A"}
             </p>
 
+            {/* SHARED LOCATION */}
+            <p className="flex items-center gap-1">
+              <span className="font-medium">Shared Location:</span>{" "}
+              {hasLocation ? (
+                <a
+                  href={`https://www.google.com/maps?q=${order.location.lat},${order.location.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-blue-600 underline"
+                >
+                  <MapPin size={14} />
+                  View on Google Maps ({order.location.lat.toFixed(4)},{" "}
+                  {order.location.lng.toFixed(4)})
+                </a>
+              ) : (
+                <span className="text-gray-400">Not shared</span>
+              )}
+            </p>
+
             {order.notes && (
               <p>
                 <span className="font-medium">Notes:</span> {order.notes}
               </p>
             )}
           </div>
+
+          {/* MAP PREVIEW */}
+          {hasLocation && (
+            <div className="mt-4 rounded-lg overflow-hidden border h-48">
+              <iframe
+                title="Customer location"
+                width="100%"
+                height="100%"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://maps.google.com/maps?q=${order.location.lat},${order.location.lng}&z=15&output=embed`}
+              />
+            </div>
+          )}
         </div>
 
         {/* ORDER ITEMS */}

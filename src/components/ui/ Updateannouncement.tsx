@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { X, MapPin, Truck, type LucideIcon } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────────────────
    HOW THIS WORKS
@@ -16,22 +16,24 @@ import { X } from "lucide-react";
       NOT show again — until you bump the version next time.
 ─────────────────────────────────────────────────────────────────── */
 
-const UPDATE_VERSION = "2026-06-22-image-preview";
+const UPDATE_VERSION = "2026-09-04-location-sharing";
 const STORAGE_KEY = "matteekay_last_seen_update";
 
 // Logo path — matches the one used in Footer.tsx ("/logo.PNG" served from /public).
 const LOGO_SRC = "/logo.PNG";
 
-const UPDATE_FEATURES: { title: string; description: string }[] = [
+const UPDATE_FEATURES: { title: string; description: string; icon: LucideIcon }[] = [
   {
-    title: "Full Image Preview",
+    title: "Share Your Location",
     description:
-      "Tap any product or variant photo to view it up close in a sharp, full-size preview.",
+      "At checkout, tap Share My Location so our riders can find you faster — no more back-and-forth for directions.",
+    icon: MapPin,
   },
   {
-    title: "Smoother Browsing",
+    title: "Faster, Smoother Delivery",
     description:
-      "Quick, glass-style overlays make checking colors and details faster than ever.",
+      "Sharing your location is optional, but it helps us get your order to your door quicker and with fewer delays.",
+    icon: Truck,
   },
 ];
 
@@ -143,27 +145,44 @@ const UpdateAnnouncement = () => {
                   What's New
                 </p>
                 <h2 className="text-white text-l font-light">
-                  We've polished new feautures to make your experience with matteekay even better 
+                  Delivery just got easier — share your location so we can
+                  find you faster
                 </h2>
               </div>
 
               <div className="space-y-4">
-                {UPDATE_FEATURES.map((feature) => (
-                  <div key={feature.title} className="flex gap-3">
-                    <div
-                      className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{ background: "rgba(255,255,255,0.6)" }}
-                    />
-                    <div>
-                      <p className="text-white text-sm font-medium uppercase tracking-wide">
-                        {feature.title}
-                      </p>
-                      <p className="text-white/70 text-sm mt-0.5">
-                        {feature.description}
-                      </p>
+                {UPDATE_FEATURES.map((feature) => {
+                  const Icon = feature.icon;
+
+                  return (
+                    <div key={feature.title} className="flex gap-3">
+                      {/* Glassy icon chip — same visual language as the
+                          logo chip and close button above, just smaller. */}
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{
+                          background: "rgba(255,255,255,0.10)",
+                          border: "1px solid rgba(255,255,255,0.25)",
+                          backdropFilter: "blur(12px) saturate(180%)",
+                          WebkitBackdropFilter: "blur(12px) saturate(180%)",
+                          boxShadow:
+                            "inset 0 1px 1px rgba(255,255,255,0.2)",
+                        }}
+                      >
+                        <Icon size={15} color="#ffffff" strokeWidth={2} />
+                      </div>
+
+                      <div>
+                        <p className="text-white text-sm font-medium uppercase tracking-wide">
+                          {feature.title}
+                        </p>
+                        <p className="text-white/70 text-sm mt-0.5">
+                          {feature.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <button

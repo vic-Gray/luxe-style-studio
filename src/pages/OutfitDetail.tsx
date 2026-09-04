@@ -987,7 +987,7 @@ const OutfitDetail = () => {
       {/* NEW: Glass image modal, shared across main + variant images */}
       <ImageModal data={modalImage} onClose={() => setModalImage(null)} />
 
-      <main className="pt-24 max-w-7xl mx-auto px-4 md:px-12 pb-24">
+      <main className="pt-28 md:pt-36 max-w-7xl mx-auto px-4 md:px-12 pb-24">
         <motion.button
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}

@@ -7,7 +7,6 @@ import * as express from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
-  // ✅ Raw body middleware for Paystack webhook signature verification
   app.use((req: any, res: any, next: any) => {
     if (req.path === '/payments/webhook' && req.method === 'POST') {
       let body = '';
@@ -28,10 +27,10 @@ async function bootstrap() {
     }
   });
 
-  // ✅ Global body-parser for all other routes (enabled after webhook middleware)
+
   app.use(express.json());
 
-  // ✅ Enable CORS (Configured for development and production)
+
   const frontendUrl = process.env.FRONTEND_URL;
   app.enableCors({
     origin: frontendUrl ? frontendUrl : true,
@@ -40,10 +39,10 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // ✅ Global API prefix
+
   app.setGlobalPrefix('api');
 
-  // ✅ Global validation pipe
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -55,7 +54,7 @@ async function bootstrap() {
     }),
   );
 
-  // ✅ Swagger documentation setup
+
   const config = new DocumentBuilder()
     .setTitle('matteekay Studio API')
     .setDescription('welcome to matteekay API documentation')
@@ -74,7 +73,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  // ✅ Start server
+
   const port = process.env.PORT || 3001;
   await app.listen(port);
 
