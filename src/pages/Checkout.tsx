@@ -31,6 +31,7 @@ interface FormErrors {
 interface CustomerLocation {
   lat: number;
   lng: number;
+  accuracy?: number;
 }
 
 type LocationStatus = "idle" | "loading" | "success" | "error";
@@ -86,6 +87,7 @@ const Checkout = () => {
         setLocation({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
         });
         setLocationStatus("success");
       },
@@ -97,7 +99,13 @@ const Checkout = () => {
             : "Couldn't get your location. Please try again."
         );
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        // Force a fresh GPS/network fix instead of a cached one — a
+        // cached fix is the most common reason the pin looks "off".
+        maximumAge: 0,
+      }
     );
   };
 
@@ -224,7 +232,11 @@ const Checkout = () => {
         // Customer's shared geolocation (optional — may be null
         // if they declined or the browser doesn't support it)
         location: location
-          ? { lat: location.lat, lng: location.lng }
+          ? {
+              lat: location.lat,
+              lng: location.lng,
+              accuracy: location.accuracy,
+            }
           : null,
 
         items: items.map((item) => ({
@@ -498,10 +510,54 @@ const Checkout = () => {
               </p>
 
               {locationStatus === "success" && location && (
-                <p className="text-xs text-green-600">
-                  Captured: {location.lat.toFixed(4)},{" "}
-                  {location.lng.toFixed(4)}
-                </p>
+                <div className="space-y-2">
+                  {/* MAP PREVIEW — lets the customer actually see the
+                      pin and confirm it's right before paying, instead
+                      of trusting a raw pair of numbers. */}
+                  <div className="rounded-lg overflow-hidden border h-48">
+                    <iframe
+                      title="Your shared location"
+                      width="100%"
+                      height="100%"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://maps.google.com/maps?q=${location.lat},${location.lng}&z=16&output=embed`}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-green-600">
+                      Location captured
+                      {typeof location.accuracy === "number" &&
+                        ` (accurate to ±${Math.round(
+                          location.accuracy
+                        )}m)`}
+                    </p>
+
+                    <a
+                      href={`https://www.google.com/maps?q=${location.lat},${location.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 underline"
+                    >
+                      Open in Google Maps
+                    </a>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    Pin looks off? GPS accuracy can vary by device and
+                    signal — try re-sharing from a phone outdoors, or
+                    just rely on the address above.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleShareLocation}
+                    className="text-xs text-muted-foreground underline"
+                  >
+                    Re-share location
+                  </button>
+                </div>
               )}
 
               {locationStatus === "error" && (

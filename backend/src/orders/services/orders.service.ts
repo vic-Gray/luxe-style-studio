@@ -1,16 +1,86 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { Order } from "../entities/order.entity";
-import { CreateOrderDto, UpdateOrderStatusDto } from "../dto";
+import { CreateOrderDto, LocationDto, UpdateOrderStatusDto } from "../dto";
 import { UsersService } from "../../users/services/users.service";
 import { ItemsService } from "../../items/services/items.service";
+
+/**
+ * Validates the optional customer location payload.
+ *
+ * Returns a sanitized location object on success, or null if the value is
+ * absent, null, or violates any constraint. Violations are logged (not thrown)
+ * so that a bad location never blocks order creation.
+ *
+ * Rules:
+ *  - lat must be a finite number in [-90, 90]
+ *  - lng must be a finite number in [-180, 180]
+ *  - accuracy, if present, must be a finite number >= 0
+ */
+export function validateLocation(
+  raw: LocationDto | null | undefined,
+  logger: Logger,
+): { lat: number; lng: number; accuracy: number | null } | null {
+  // Absent or explicitly null — this is the normal/majority case; return null silently.
+  if (raw == null) {
+    return null;
+  }
+
+  const { lat, lng, accuracy } = raw;
+
+  // lat check
+  if (
+    typeof lat !== "number" ||
+    !Number.isFinite(lat) ||
+    lat < -90 ||
+    lat > 90
+  ) {
+    logger.warn(
+      `[validateLocation] Invalid lat value — dropping location. Received: ${JSON.stringify(raw)}`,
+    );
+    return null;
+  }
+
+  // lng check
+  if (
+    typeof lng !== "number" ||
+    !Number.isFinite(lng) ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    logger.warn(
+      `[validateLocation] Invalid lng value — dropping location. Received: ${JSON.stringify(raw)}`,
+    );
+    return null;
+  }
+
+  // accuracy check (optional field — skip if absent/null)
+  let sanitizedAccuracy: number | null = null;
+  if (accuracy != null) {
+    if (
+      typeof accuracy !== "number" ||
+      !Number.isFinite(accuracy) ||
+      accuracy < 0
+    ) {
+      logger.warn(
+        `[validateLocation] Invalid accuracy value — dropping location. Received: ${JSON.stringify(raw)}`,
+      );
+      return null;
+    }
+    sanitizedAccuracy = accuracy;
+  }
+
+  return { lat, lng, accuracy: sanitizedAccuracy };
+}
 
 /**
  * OrdersService - Handles order-related business logic
  */
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     @InjectModel(Order.name) private orderModel: Model<Order>,
     private readonly usersService: UsersService,
@@ -78,6 +148,10 @@ export class OrdersService {
       email: createOrderDto.email,
       phone: createOrderDto.phone,
       items: processedItems,
+      // Validate and sanitize the optional customer location before persisting.
+      // validateLocation() returns null for absent, null, or out-of-range values
+      // and logs a warning — the order is never rejected because of location.
+      location: validateLocation(createOrderDto.location, this.logger),
     });
 
     const savedOrder = await order.save();
