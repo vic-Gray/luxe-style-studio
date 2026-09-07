@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 @Schema({ timestamps: true })
 export class User extends Document {
@@ -24,10 +24,10 @@ export class User extends Document {
   @Prop()
   postalCode: string;
 
-  @Prop({ default: 'customer' })
+  @Prop({ default: "customer" })
   role: string;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Order' }], default: [] })
+  @Prop({ type: [{ type: Types.ObjectId, ref: "Order" }], default: [] })
   orders: Types.ObjectId[];
 
   @Prop({ default: true })

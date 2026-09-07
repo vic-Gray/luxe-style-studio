@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document } from "mongoose";
 
 export type SlideshowDocument = Slideshow & Document;
 
@@ -19,18 +19,24 @@ export class Slideshow {
 
   @Prop({ default: true })
   isActive?: boolean;
-}import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { v2 as cloudinary } from 'cloudinary';
+}
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { v2 as cloudinary } from "cloudinary";
 
-import { CreateSlideshowDto, UpdateSlideshowDto } from './dto';
-import { PaginatedResult } from '../common/interfaces';
+import { CreateSlideshowDto, UpdateSlideshowDto } from "./dto";
+import { PaginatedResult } from "../common/interfaces";
 
 @Injectable()
 export class SlideshowService {
   constructor(
-    @InjectModel(Slideshow.name) private slideshowModel: Model<SlideshowDocument>,
+    @InjectModel(Slideshow.name)
+    private slideshowModel: Model<SlideshowDocument>,
   ) {
     // Configure Cloudinary
     cloudinary.config({
@@ -46,8 +52,11 @@ export class SlideshowService {
    * @param createdBy - Admin ID who created the slideshow
    * @returns Created slideshow
    */
-  async create(createSlideshowDto: CreateSlideshowDto, createdBy?: string): Promise<Slideshow> {
-    const { Types } = await import('mongoose');
+  async create(
+    createSlideshowDto: CreateSlideshowDto,
+    createdBy?: string,
+  ): Promise<Slideshow> {
+    const { Types } = await import("mongoose");
     const slideshow = new this.slideshowModel({
       ...createSlideshowDto,
       createdBy: createdBy ? new Types.ObjectId(createdBy) : undefined,
@@ -55,25 +64,29 @@ export class SlideshowService {
     return slideshow.save();
   }
 
-/**
-     * Get all slideshow images with pagination
-     * @param page - Page number (1-based)
-     * @param limit - Items per page
-     * @param search - Optional search term to filter by title or displayText
-     * @returns Paginated list of slideshow images
-     */
-  async findAll(page: number = 1, limit: number = 10, search?: string): Promise<PaginatedResult<Slideshow>> {
+  /**
+   * Get all slideshow images with pagination
+   * @param page - Page number (1-based)
+   * @param limit - Items per page
+   * @param search - Optional search term to filter by title or displayText
+   * @returns Paginated list of slideshow images
+   */
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+  ): Promise<PaginatedResult<Slideshow>> {
     const skip = (page - 1) * limit;
-    
+
     // Build query filter
     const filter: Record<string, unknown> = { isActive: true };
     if (search) {
       filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { displayText: { $regex: search, $options: 'i' } },
+        { title: { $regex: search, $options: "i" } },
+        { displayText: { $regex: search, $options: "i" } },
       ];
     }
-    
+
     const [data, total] = await Promise.all([
       this.slideshowModel
         .find(filter)
@@ -112,75 +125,82 @@ export class SlideshowService {
    * @param updateSlideshowDto - Updated slideshow data
    * @returns Updated slideshow
    */
-  async update(id: string, updateSlideshowDto: UpdateSlideshowDto): Promise<Slideshow> {
+  async update(
+    id: string,
+    updateSlideshowDto: UpdateSlideshowDto,
+  ): Promise<Slideshow> {
     const slideshow = await this.slideshowModel.findByIdAndUpdate(
       id,
       { $set: updateSlideshowDto },
       { new: true, runValidators: true },
     );
-    
+
     if (!slideshow) {
       throw new NotFoundException(`Slideshow with ID ${id} not found`);
     }
-    
+
     return slideshow;
   }
 
-/**
-     * Remove a slideshow image
-     * @param id - Slideshow ID
-     * @returns Removed slideshow
-     */
-    async remove(id: string): Promise<Slideshow> {
-        const slideshow = await this.slideshowModel.findByIdAndUpdate(
-            id,
-            { $set: { isActive: false } },
-            { new: true },
-        );
+  /**
+   * Remove a slideshow image
+   * @param id - Slideshow ID
+   * @returns Removed slideshow
+   */
+  async remove(id: string): Promise<Slideshow> {
+    const slideshow = await this.slideshowModel.findByIdAndUpdate(
+      id,
+      { $set: { isActive: false } },
+      { new: true },
+    );
 
-        if (!slideshow) {
-            throw new NotFoundException(`Slideshow with ID ${id} not found`);
-        }
-
-        return slideshow;
+    if (!slideshow) {
+      throw new NotFoundException(`Slideshow with ID ${id} not found`);
     }
 
-    /**
-     * Delete all slideshow images
-     * @returns Number of deleted images
-     */
-    async deleteAll(): Promise<{ deletedCount: number }> {
-        const result = await this.slideshowModel.deleteMany({}).exec();
-        return { deletedCount: result.deletedCount || 0 };
-    }
+    return slideshow;
+  }
+
+  /**
+   * Delete all slideshow images
+   * @returns Number of deleted images
+   */
+  async deleteAll(): Promise<{ deletedCount: number }> {
+    const result = await this.slideshowModel.deleteMany({}).exec();
+    return { deletedCount: result.deletedCount || 0 };
+  }
 
   /**
    * Upload image to Cloudinary
    * @param file - Image file buffer
    * @returns Cloudinary upload result with URL
    */
-  async uploadImage(file: Express.Multer.File): Promise<{ url: string; publicId: string }> {
+  async uploadImage(
+    file: Express.Multer.File,
+  ): Promise<{ url: string; publicId: string }> {
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: 'luxe-style-studio/slideshow',
-          resource_type: 'image',
+          folder: "luxe-style-studio/slideshow",
+          resource_type: "image",
           transformation: [
-            { width: 1920, height: 1080, crop: 'limit' },
-            { quality: 'auto:good' },
-            { fetch_format: 'auto' },
+            { width: 1920, height: 1080, crop: "limit" },
+            { quality: "auto:good" },
+            { fetch_format: "auto" },
           ],
         },
         (error, result) => {
           if (error) {
-            reject(new BadRequestException('Failed to upload image to Cloudinary'));
+            reject(
+              new BadRequestException("Failed to upload image to Cloudinary"),
+            );
           } else if (result) {
             resolve({
               url: result.secure_url,
               publicId: result.public_id,
             });
           } else {
-            reject(new BadRequestException('No result from Cloudinary'));
+            reject(new BadRequestException("No result from Cloudinary"));
           }
         },
       );
@@ -197,7 +217,7 @@ export class SlideshowService {
     try {
       await cloudinary.uploader.destroy(publicId);
     } catch (error) {
-      console.error('Failed to delete image from Cloudinary:', error);
+      console.error("Failed to delete image from Cloudinary:", error);
     }
   }
 

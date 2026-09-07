@@ -3,11 +3,40 @@ import { useParams, useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 
+interface OrderItem {
+  name?: string;
+  slug?: string;
+  image?: string;
+  category?: string;
+  size?: string;
+  color?: string;
+  quantity?: number;
+  price?: number;
+}
+
+interface Order {
+  _id?: string;
+  createdAt?: string;
+  status?: string;
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  deliveryAddress?: string;
+  shippingAddress?: string;
+  notes?: string;
+  total?: number;
+  currency?: string;
+  isPaid?: boolean;
+  location?: { lat: number; lng: number; accuracy?: number } | null;
+  items?: OrderItem[];
+  userId?: { name?: string; email?: string };
+}
+
 const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem("admin-token");
@@ -195,7 +224,7 @@ const OrderDetails = () => {
 
           {order.items?.length > 0 ? (
             <div className="space-y-4">
-              {order.items.map((item: any, index: number) => (
+              {order.items.map((item: OrderItem, index: number) => (
                 <div key={index} className="flex gap-4 border rounded-lg p-4">
                   {/* IMAGE */}
                   <img

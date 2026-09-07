@@ -40,14 +40,14 @@ const PaymentCallback = () => {
         const data = await res.json();
 
         if (!cancelled) {
-          if ((data as any)?.success === true) {
+          if ((data as { success?: boolean })?.success === true) {
             // clear cart only on confirmed success
             clearCart();
             setStatus("success");
           } else {
             setStatus("failed");
             setErrorMessage(
-              (data as any)?.message || "Payment verification failed.",
+              (data as { message?: string })?.message || "Payment verification failed.",
             );
           }
         }

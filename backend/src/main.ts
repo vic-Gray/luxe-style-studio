@@ -1,36 +1,42 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import helmet from 'helmet';
-import * as express from 'express';
-import mongoSanitize from 'express-mongo-sanitize';
-import rateLimit from 'express-rate-limit';
+import { NestFactory } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { AppModule } from "./app.module";
+import helmet from "helmet";
+import * as express from "express";
+import mongoSanitize from "express-mongo-sanitize";
+import rateLimit from "express-rate-limit";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
-  app.use((req: express.Request & { rawBody?: string }, res: express.Response, next: express.NextFunction) => {
-    if (req.path === '/payments/webhook' && req.method === 'POST') {
-      let body = '';
-      req.on('data', (chunk: Buffer) => {
-        body += chunk.toString();
-      });
-      req.on('end', () => {
-        req.rawBody = body;
-        try {
-          req.body = JSON.parse(body);
-        } catch {
-          req.body = {};
-        }
+  app.use(
+    (
+      req: express.Request & { rawBody?: string },
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      if (req.path === "/payments/webhook" && req.method === "POST") {
+        let body = "";
+        req.on("data", (chunk: Buffer) => {
+          body += chunk.toString();
+        });
+        req.on("end", () => {
+          req.rawBody = body;
+          try {
+            req.body = JSON.parse(body);
+          } catch {
+            req.body = {};
+          }
+          next();
+        });
+      } else {
         next();
-      });
-    } else {
-      next();
-    }
-  });
+      }
+    },
+  );
 
-  app.use(express.json({ limit: '10kb' }));
+  app.use(express.json({ limit: "10kb" }));
 
   app.use(mongoSanitize());
 
@@ -41,7 +47,7 @@ async function bootstrap() {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           scriptSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
+          imgSrc: ["'self'", "data:", "https:"],
           connectSrc: ["'self'"],
           fontSrc: ["'self'"],
           objectSrc: ["'none'"],
@@ -58,11 +64,11 @@ async function bootstrap() {
   );
 
   const allowedOrigins = [
-    'https://matteekay.com',
-    'https://www.matteekay.com',
-    'https://mattekay.onrender.com',
-    'http://localhost:8080',
-    'http://127.0.0.1:8080',
+    "https://matteekay.com",
+    "https://www.matteekay.com",
+    "https://mattekay.onrender.com",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
   ];
 
   app.enableCors({
@@ -71,14 +77,14 @@ async function bootstrap() {
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(new Error('Not allowed by CORS'));
+      return callback(new Error("Not allowed by CORS"));
     },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix("api");
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -98,32 +104,32 @@ async function bootstrap() {
     legacyHeaders: false,
     message: {
       status: 429,
-      error: 'Too many requests, please try again later.',
+      error: "Too many requests, please try again later.",
     },
   });
 
-  app.use('/api', apiLimiter);
+  app.use("/api", apiLimiter);
 
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = process.env.NODE_ENV === "production";
 
   if (!isProduction) {
     const config = new DocumentBuilder()
-      .setTitle('matteekay Studio API')
-      .setDescription('welcome to matteekay API documentation')
-      .setVersion('1.0')
+      .setTitle("matteekay Studio API")
+      .setDescription("welcome to matteekay API documentation")
+      .setVersion("1.0")
       .addBearerAuth()
-      .addTag('auth', 'Authentication endpoints')
-      .addTag('items', 'Items management')
-      .addTag('product-variants', 'Product variants management')
-      .addTag('users', 'Users management')
-      .addTag('orders', 'Orders management')
-      .addTag('payments', 'Payments management')
-      .addTag('admin', 'Admin dashboard')
-      .addTag('slideshow', 'Slideshow management')
+      .addTag("auth", "Authentication endpoints")
+      .addTag("items", "Items management")
+      .addTag("product-variants", "Product variants management")
+      .addTag("users", "Users management")
+      .addTag("orders", "Orders management")
+      .addTag("payments", "Payments management")
+      .addTag("admin", "Admin dashboard")
+      .addTag("slideshow", "Slideshow management")
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    SwaggerModule.setup("api/docs", app, document);
   }
 
   const port = process.env.PORT || 3001;

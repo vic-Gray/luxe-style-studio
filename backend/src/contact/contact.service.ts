@@ -1,7 +1,6 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import nodemailer from 'nodemailer';
-import { ContactDto } from './dto/create-contact.dto';
-
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import nodemailer from "nodemailer";
+import { ContactDto } from "./dto/create-contact.dto";
 
 @Injectable()
 export class ContactService {
@@ -9,7 +8,7 @@ export class ContactService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
+      host: "smtp-relay.brevo.com",
       port: 587,
       secure: false,
       auth: {
@@ -43,14 +42,12 @@ export class ContactService {
 
       return {
         success: true,
-        message: 'Message sent successfully',
+        message: "Message sent successfully",
       };
     } catch (error) {
-      console.error('Brevo error:', error);
+      console.error("Brevo error:", error);
 
-      throw new InternalServerErrorException(
-        'Failed to send message',
-      );
+      throw new InternalServerErrorException("Failed to send message");
     }
   }
 }

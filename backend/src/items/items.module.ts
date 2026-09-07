@@ -1,18 +1,18 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { Module, forwardRef } from "@nestjs/common";
+import { MongooseModule } from "@nestjs/mongoose";
 
-import { ItemsController } from './controllers/items.controller';
-import { ItemsService } from './services/items.service';
+import { ItemsController } from "./controllers/items.controller";
+import { ItemsService } from "./services/items.service";
 
-import { Item, ItemSchema } from './entities/item.entity';
+import { Item, ItemSchema } from "./entities/item.entity";
 import {
   ProductVariant,
   ProductVariantSchema,
-} from '../product-variants/entities/product-variant.entity';
+} from "../product-variants/entities/product-variant.entity";
 
-import { ProductVariantsModule } from '../product-variants/product-variants.module';
+import { ProductVariantsModule } from "../product-variants/product-variants.module";
 
-import { AuthModule } from '../auth/auth.module'; // ADD THIS
+import { AuthModule } from "../auth/auth.module"; // ADD THIS
 
 @Module({
   imports: [

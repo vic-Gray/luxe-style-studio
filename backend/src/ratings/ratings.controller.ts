@@ -1,20 +1,11 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
-import { RatingsService } from './ratings.service';
-import { CreateRatingDto } from './dto/create-rating.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { CurrentUser } from '@/common/decorators';
-import { JwtPayload } from '@/common/interfaces';
+import { Controller, Post, Body, Get, Param, UseGuards } from "@nestjs/common";
+import { RatingsService } from "./ratings.service";
+import { CreateRatingDto } from "./dto/create-rating.dto";
+import { JwtAuthGuard } from "@/common/guards/jwt-auth.guard";
+import { CurrentUser } from "@/common/decorators";
+import { JwtPayload } from "@/common/interfaces";
 
-
-
-@Controller('ratings')
+@Controller("ratings")
 export class RatingsController {
   constructor(private readonly ratingsService: RatingsService) {}
 
@@ -22,10 +13,10 @@ export class RatingsController {
    * Rate an item (create or update rating)
    * POST /ratings/:itemId
    */
-  @Post(':itemId')
+  @Post(":itemId")
   @UseGuards(JwtAuthGuard)
   async rateItem(
-    @Param('itemId') itemId: string,
+    @Param("itemId") itemId: string,
     @Body() createRatingDto: CreateRatingDto,
     @CurrentUser() user: JwtPayload,
   ) {
@@ -40,8 +31,8 @@ export class RatingsController {
    * Get average rating for an item
    * GET /ratings/:itemId/average
    */
-  @Get(':itemId/average')
-  async getItemRating(@Param('itemId') itemId: string) {
+  @Get(":itemId/average")
+  async getItemRating(@Param("itemId") itemId: string) {
     return this.ratingsService.getItemRating(itemId);
   }
 
@@ -49,10 +40,10 @@ export class RatingsController {
    * Get current user's rating for an item
    * GET /ratings/:itemId/my
    */
-  @Get(':itemId/my')
+  @Get(":itemId/my")
   @UseGuards(JwtAuthGuard)
   async getUserRating(
-    @Param('itemId') itemId: string,
+    @Param("itemId") itemId: string,
     @CurrentUser() user: JwtPayload,
   ) {
     return this.ratingsService.getUserRatingForItem(user.sub, itemId);

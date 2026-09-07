@@ -46,8 +46,8 @@ const Login = () => {
       const data = await res.json();
       localStorage.setItem("admin-token", data.accessToken);
       navigate("/admin/dashboard", { replace: true });
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err as Error).message);
       setIsLoading(false);
     }
   };

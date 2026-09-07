@@ -1,7 +1,12 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { ROLES_KEY, IS_PUBLIC_KEY } from '../decorators';
-import { UserRole } from '../interfaces';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { ROLES_KEY, IS_PUBLIC_KEY } from "../decorators";
+import { UserRole } from "../interfaces";
 
 /**
  * Roles Guard for Role-Based Access Control (RBAC)
@@ -23,10 +28,10 @@ export class RolesGuard implements CanActivate {
     }
 
     // Get required roles from decorator
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     // If no roles specified, allow access
     if (!requiredRoles || requiredRoles.length === 0) {
@@ -39,7 +44,7 @@ export class RolesGuard implements CanActivate {
     // Check if user has required role
     if (!user || !requiredRoles.includes(user.role)) {
       throw new ForbiddenException(
-        'Access denied. Insufficient permissions for this resource.',
+        "Access denied. Insufficient permissions for this resource.",
       );
     }
 

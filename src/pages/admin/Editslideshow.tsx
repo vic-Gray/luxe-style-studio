@@ -138,9 +138,9 @@ const EditSlideshow = () => {
         setShowSuccess(false);
         navigate("/admin/slideshow");
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to update slideshow:", err);
-      const message = err.response?.data?.message || "Failed to update slideshow";
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to update slideshow";
       alert(message);
     } finally {
       setIsSubmitting(false);

@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import axios from 'axios';
-import { PaystackVerifyResponse } from '../types/paystack-response';
-import { Payment } from '../entities/payment.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import axios from "axios";
+import { PaystackVerifyResponse } from "../types/paystack-response";
+import { Payment } from "../entities/payment.entity";
 
 @Injectable()
 export class PaymentsService {
@@ -14,7 +14,13 @@ export class PaymentsService {
     @InjectModel(Payment.name) private paymentModel: Model<Payment>,
   ) {}
 
-  async initializePayment(email: string, amount: number, orderId: string): Promise<{ data: { data: { reference?: string }; authorization_url?: string } }> {
+  async initializePayment(
+    email: string,
+    amount: number,
+    orderId: string,
+  ): Promise<{
+    data: { data: { reference?: string }; authorization_url?: string };
+  }> {
     return axios.post(
       `${this.baseUrl}/transaction/initialize`,
       {
@@ -26,7 +32,7 @@ export class PaymentsService {
       {
         headers: {
           Authorization: `Bearer ${this.secretKey}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       },
     );

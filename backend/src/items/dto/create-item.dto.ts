@@ -65,4 +65,3 @@ export class CreateItemDto {
   @IsString()
   size?: string;
 }
-

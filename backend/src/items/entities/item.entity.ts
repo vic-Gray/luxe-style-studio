@@ -27,7 +27,7 @@ export class Item extends Document {
   @Prop({ default: true })
   color!: string | null;
 
-  @Prop({ type: Types.ObjectId})
+  @Prop({ type: Types.ObjectId })
   stock!: number;
 
   @Prop({ type: Types.ObjectId, ref: "User", nullable: true })

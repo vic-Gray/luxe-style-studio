@@ -26,12 +26,18 @@ export class LocationDto {
   @IsNumber()
   lat?: number;
 
-  @ApiPropertyOptional({ description: "Longitude (-180 to 180)", example: 3.3792 })
+  @ApiPropertyOptional({
+    description: "Longitude (-180 to 180)",
+    example: 3.3792,
+  })
   @IsOptional()
   @IsNumber()
   lng?: number;
 
-  @ApiPropertyOptional({ description: "GPS accuracy in metres (≥ 0)", example: 35 })
+  @ApiPropertyOptional({
+    description: "GPS accuracy in metres (≥ 0)",
+    example: 35,
+  })
   @IsOptional()
   @IsNumber()
   accuracy?: number;

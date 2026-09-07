@@ -351,14 +351,14 @@ const Checkout = () => {
       /* ---------------- REDIRECT TO PAYSTACK ---------------- */
       window.location.href =
         paymentUrl;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Checkout error:",
         err
       );
 
       setErrorMessage(
-        err.message ||
+        (err as Error).message ||
           "Something went wrong"
       );
     } finally {

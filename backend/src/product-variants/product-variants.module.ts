@@ -1,16 +1,16 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { Module, forwardRef } from "@nestjs/common";
+import { MongooseModule } from "@nestjs/mongoose";
 
-import { ProductVariantsController } from './controllers/product-variants.controller';
-import { ProductVariantsService } from './services/product-variants.service';
+import { ProductVariantsController } from "./controllers/product-variants.controller";
+import { ProductVariantsService } from "./services/product-variants.service";
 
 import {
   ProductVariant,
   ProductVariantSchema,
-} from './entities/product-variant.entity';
+} from "./entities/product-variant.entity";
 
-import { ItemsModule } from '../items/items.module';
-import { AuthModule } from '../auth/auth.module';
+import { ItemsModule } from "../items/items.module";
+import { AuthModule } from "../auth/auth.module";
 
 @Module({
   imports: [

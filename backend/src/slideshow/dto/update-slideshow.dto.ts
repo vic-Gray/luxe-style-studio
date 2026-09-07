@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, Min, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, IsBoolean } from "class-validator";
 
 export class UpdateSlideshowDto {
   @IsString()

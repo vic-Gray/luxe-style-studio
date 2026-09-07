@@ -104,7 +104,7 @@ const EditItem = () => {
   }, [id]);
 
   /* INPUT */
-  const handleInputChange = (e: any) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
 
@@ -113,7 +113,7 @@ const EditItem = () => {
   };
 
   /* IMAGE */
-  const handleImageChange = (e: any) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -131,7 +131,7 @@ const EditItem = () => {
   };
 
   /* SUBMIT */
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
@@ -167,9 +167,9 @@ const EditItem = () => {
       setShowSuccess(true);
 
       setTimeout(() => navigate("/admin/items"), 1200);
-    } catch (err: any) {
-      console.error("Update failed:", err?.response?.data);
-      alert(err?.response?.data?.message || "Update failed");
+    } catch (err: unknown) {
+      console.error("Update failed:", (err as { response?: { data?: unknown } })?.response?.data);
+      alert((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Update failed");
     } finally {
       setIsSubmitting(false);
     }

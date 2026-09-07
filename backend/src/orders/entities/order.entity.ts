@@ -1,10 +1,10 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 /* ---------------- ORDER ITEM ---------------- */
 @Schema({ _id: false })
 export class OrderItem {
-  @Prop({ type: Types.ObjectId, ref: 'Item', required: false })
+  @Prop({ type: Types.ObjectId, ref: "Item", required: false })
   itemId?: Types.ObjectId;
 
   @Prop({ required: true })
@@ -62,7 +62,7 @@ export const OrderLocationSchema = SchemaFactory.createForClass(OrderLocation);
 /* ---------------- ORDER ---------------- */
 @Schema({ timestamps: true })
 export class Order extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  @Prop({ type: Types.ObjectId, ref: "User", required: false })
   userId?: Types.ObjectId;
 
   @Prop()
@@ -80,12 +80,12 @@ export class Order extends Document {
   @Prop({ required: true, min: 0 })
   total?: number;
 
-  @Prop({ default: 'NGN' })
+  @Prop({ default: "NGN" })
   currency?: string;
 
   @Prop({
-    default: 'pending',
-    enum: ['pending', 'paid', 'shipped', 'delivered', 'cancelled'],
+    default: "pending",
+    enum: ["pending", "paid", "shipped", "delivered", "cancelled"],
   })
   status?: string;
 
@@ -107,7 +107,7 @@ export class Order extends Document {
   @Prop()
   notes?: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Payment', required: false })
+  @Prop({ type: Types.ObjectId, ref: "Payment", required: false })
   paymentId?: Types.ObjectId;
 
   // New fields
