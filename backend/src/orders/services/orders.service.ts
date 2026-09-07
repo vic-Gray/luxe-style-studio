@@ -171,7 +171,7 @@ export class OrdersService {
    * GET ALL ORDERS (ADMIN)
    */
   async findAll(page = 1, limit = 10, status?: string) {
-    const query: any = { isPaid: true }; // add this
+    const query: Record<string, unknown> = { isPaid: true };
     if (status) query.status = status;
 
     const skip = (page - 1) * limit;

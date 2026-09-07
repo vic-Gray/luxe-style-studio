@@ -39,11 +39,12 @@ export class ProductVariantsService {
   }
 
   async update(id: string, updateDto: UpdateProductVariantDto): Promise<ProductVariant> {
+    const updateData: Record<string, unknown> = { ...updateDto };
     if (updateDto.productId) {
-      updateDto.productId = new Types.ObjectId(updateDto.productId) as any;
+      updateData.productId = new Types.ObjectId(updateDto.productId);
     }
     const variant = await this.productVariantModel
-      .findByIdAndUpdate(id, { $set: updateDto }, { new: true, runValidators: true })
+      .findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true })
       .exec();
     if (!variant) {
       throw new NotFoundException(`ProductVariant with ID ${id} not found`);

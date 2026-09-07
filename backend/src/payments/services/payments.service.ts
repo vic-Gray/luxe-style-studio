@@ -14,7 +14,7 @@ export class PaymentsService {
     @InjectModel(Payment.name) private paymentModel: Model<Payment>,
   ) {}
 
-  async initializePayment(email: string, amount: number, orderId: string): Promise<any> {
+  async initializePayment(email: string, amount: number, orderId: string): Promise<{ data: { data: { reference?: string }; authorization_url?: string } }> {
     return axios.post(
       `${this.baseUrl}/transaction/initialize`,
       {
@@ -32,8 +32,8 @@ export class PaymentsService {
     );
   }
 
-  async verifyPayment(reference: string): Promise<any> {
-    const response = await axios.get(
+  async verifyPayment(reference: string): Promise<PaystackVerifyResponse> {
+    const response = await axios.get<PaystackVerifyResponse>(
       `${this.baseUrl}/transaction/verify/${reference}`,
       {
         headers: {

@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common";
 import { PaymentsService } from "../services/payments.service";
 import { CreateOrderDto } from "@/orders/dto";
-import { Response } from "express";
+import { Response, Request } from "express";
 import * as crypto from "crypto";
 
 @ApiTags("payments")
@@ -100,7 +100,7 @@ export class PaymentsController {
     summary: "Paystack webhook",
     description: "Handle Paystack charge.success webhook events",
   })
-  async webhook(@Req() req: any) {
+  async webhook(@Req() req: Request & { rawBody?: string; body?: { event?: string; data?: { reference?: string } } }) {
     const logger = new Logger("PaymentsController");
 
     const paystackSignature = req.headers["x-paystack-signature"];

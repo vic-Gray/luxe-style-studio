@@ -10,7 +10,7 @@ import rateLimit from 'express-rate-limit';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
-  app.use((req: any, res: any, next: any) => {
+  app.use((req: express.Request & { rawBody?: string }, res: express.Response, next: express.NextFunction) => {
     if (req.path === '/payments/webhook' && req.method === 'POST') {
       let body = '';
       req.on('data', (chunk: Buffer) => {

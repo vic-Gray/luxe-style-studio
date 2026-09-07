@@ -149,7 +149,7 @@ export class UsersService {
   /**
    * Get user with order count
    */
-  async findOneWithOrderCount(id: string): Promise<any> {
+  async findOneWithOrderCount(id: string): Promise<Record<string, unknown>> {
     const user = await this.userModel.findById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);

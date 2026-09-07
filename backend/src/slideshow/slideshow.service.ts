@@ -26,9 +26,10 @@ export class SlideshowService {
    * @returns Created slideshow
    */
   async create(createSlideshowDto: CreateSlideshowDto, createdBy?: string): Promise<Slideshow> {
+    const { Types } = await import('mongoose');
     const slideshow = new this.slideshowModel({
       ...createSlideshowDto,
-      createdBy: createdBy ? new (require('mongoose').Types.ObjectId)(createdBy) : undefined,
+      createdBy: createdBy ? new Types.ObjectId(createdBy) : undefined,
     });
     return slideshow.save();
   }
@@ -44,7 +45,7 @@ export class SlideshowService {
     const skip = (page - 1) * limit;
     
     // Build query filter
-    const filter: any = { isActive: true };
+    const filter: Record<string, unknown> = { isActive: true };
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },

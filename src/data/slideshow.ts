@@ -43,9 +43,9 @@ export const fetchSlideshows = async (
   const responseData = res.data;
 
   // Handle both direct array format and paginated { data: [] } format
-  const slideshows: any[] = Array.isArray(responseData)
-    ? responseData
-    : responseData?.data || [];
+  const slideshows: Slideshow[] = Array.isArray(responseData)
+    ? (responseData as Slideshow[])
+    : ((responseData?.data || []) as Slideshow[]);
 
   console.log("[fetchSlideshows] Parsed slideshows count:", slideshows.length);
 
@@ -53,8 +53,8 @@ export const fetchSlideshows = async (
     throw new Error("Invalid API response format");
   }
 
-  return slideshows.map((slideshow: any) => ({
-    id: slideshow._id,
+  return slideshows.map((slideshow: Slideshow) => ({
+    id: (slideshow as Slideshow & { _id?: string })._id ?? slideshow.id,
     imageUrl: slideshow.imageUrl,
     title: slideshow.title,
     displayText: slideshow.displayText,

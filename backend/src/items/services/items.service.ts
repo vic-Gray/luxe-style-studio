@@ -25,7 +25,7 @@ export class ItemsService {
   async create(createItemDto: CreateItemDto, createdBy?: string): Promise<Item> {
     const item = new this.itemModel({
       ...createItemDto,
-      createdBy: createdBy ? new (require('mongoose').Types.ObjectId)(createdBy) : undefined,
+      createdBy: createdBy ? new Types.ObjectId(createdBy) : undefined,
     });
     return item.save();
   }
@@ -36,7 +36,7 @@ export class ItemsService {
     category?: string,
     search?: string,
   ): Promise<PaginatedResult<Item>> {
-    const query: any = { isActive: true };
+    const query: Record<string, unknown> = { isActive: true };
 
     if (category) {
       query.category = { $regex: category, $options: 'i' };
@@ -60,7 +60,7 @@ export class ItemsService {
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-async findOne(id: string): Promise<any> {
+async findOne(id: string): Promise<Record<string, unknown>> {
     const item = await this.itemModel.findById(id).exec();
     if (!item) {
       throw new NotFoundException(`Item with ID ${id} not found`);

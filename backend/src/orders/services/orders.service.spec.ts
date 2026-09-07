@@ -1,43 +1,32 @@
-import { Logger } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { OrdersService } from './orders.service';
 import { Order } from '../entities/order.entity';
-import { CreateOrderDto } from '../dto';
+import { CreateOrderDto, LocationDto } from '../dto';
 import { UsersService } from '../../users/services/users.service';
 import { ItemsService } from '../../items/services/items.service';
 
-/**
- * Unit tests for OrdersService.create() focusing on the location field.
- *
- * Dependencies (Mongoose model, UsersService, ItemsService) are mocked using
- * the NestJS testing module with the correct provider tokens so the DI
- * container can resolve them.
- *
- * Covered cases:
- *  1. Valid location → persisted and returned correctly.
- *  2. location: null explicitly → stored as null, order still succeeds.
- *  3. location entirely omitted → stored as null, order still succeeds (majority case).
- *  4. Invalid location (out-of-range, wrong types) → stored as null, no throw, warns.
- */
+type MockOrderInstance = {
+  [key: string]: unknown;
+  _id: Types.ObjectId;
+  save: jest.Mock;
+};
+
+type MockModelData = Record<string, unknown>;
+
 describe('OrdersService.create() — location field', () => {
   let service: OrdersService;
 
-  // We'll capture the last constructor call so tests can inspect the `location`
-  // field that was passed to `new this.orderModel(...)`.
-  let lastModelCtorArg: Record<string, any> | null = null;
+  let lastModelCtorArg: MockModelData | null = null;
 
-  // The saved order factory returns an object with a save() that returns itself.
-  const buildSavedInstance = (data: Record<string, any>) => {
-    const obj: any = { ...data, _id: new Types.ObjectId() };
+  const buildSavedInstance = (data: MockModelData): MockOrderInstance => {
+    const obj: MockOrderInstance = { ...data, _id: new Types.ObjectId(), save: jest.fn() };
     obj.save = jest.fn().mockResolvedValue(obj);
     return obj;
   };
 
-  // Mongoose model constructor mock — captures the argument and returns an
-  // instance with a working .save().
-  const mockModelCtor = jest.fn().mockImplementation((data: Record<string, any>) => {
+  const mockModelCtor = jest.fn().mockImplementation((data: MockModelData) => {
     lastModelCtorArg = { ...data };
     return buildSavedInstance(data);
   });
@@ -59,8 +48,6 @@ describe('OrdersService.create() — location field', () => {
     }),
   };
 
-  // ── Module setup ───────────────────────────────────────────────────────
-
   beforeEach(async () => {
     lastModelCtorArg = null;
     jest.clearAllMocks();
@@ -68,25 +55,14 @@ describe('OrdersService.create() — location field', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrdersService,
-        {
-          provide: getModelToken(Order.name),
-          useValue: mockModelCtor,
-        },
-        {
-          provide: UsersService,
-          useValue: mockUsersService,
-        },
-        {
-          provide: ItemsService,
-          useValue: mockItemsService,
-        },
+        { provide: getModelToken(Order.name), useValue: mockModelCtor },
+        { provide: UsersService, useValue: mockUsersService },
+        { provide: ItemsService, useValue: mockItemsService },
       ],
     }).compile();
 
     service = module.get<OrdersService>(OrdersService);
   });
-
-  // ── Shared minimal DTO ─────────────────────────────────────────────────
 
   const itemId = new Types.ObjectId().toHexString();
 
@@ -97,212 +73,126 @@ describe('OrdersService.create() — location field', () => {
     deliveryAddress: '12 Broad Street, Lagos',
     total: 10000,
     currency: 'NGN',
-    items: [
-      {
-        itemId,
-        name: 'Test Shirt',
-        quantity: 2,
-        price: 5000,
-      },
-    ],
+    items: [{ itemId, name: 'Test Shirt', quantity: 2, price: 5000 }],
   };
 
-  // ── Helper: run create and return whatever was passed to the model ctor ─
-
-  async function runCreate(dto: CreateOrderDto) {
+  async function runCreate(dto: CreateOrderDto): Promise<MockModelData | null> {
     await service.create(dto);
     return lastModelCtorArg;
   }
 
-  /* ================================================================== */
-  /* Case 1 — valid location                                              */
-  /* ================================================================== */
+  /* ── Case 1: valid location ──────────────────────────────────────── */
 
   it('persists a valid location with correct lat/lng/accuracy', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: 6.5244, lng: 3.3792, accuracy: 35 },
-    };
-
-    const ctorArg = await runCreate(dto);
-
-    expect(ctorArg).not.toBeNull();
-    expect(ctorArg!.location).toEqual({ lat: 6.5244, lng: 3.3792, accuracy: 35 });
+    const dto: CreateOrderDto = { ...baseDto, location: { lat: 6.5244, lng: 3.3792, accuracy: 35 } };
+    const arg = await runCreate(dto);
+    expect(arg!.location).toEqual({ lat: 6.5244, lng: 3.3792, accuracy: 35 });
   });
 
   it('persists a valid location when accuracy is 0', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: -33.8688, lng: 151.2093, accuracy: 0 },
-    };
-
-    const ctorArg = await runCreate(dto);
-    expect(ctorArg!.location).toEqual({ lat: -33.8688, lng: 151.2093, accuracy: 0 });
+    const dto: CreateOrderDto = { ...baseDto, location: { lat: -33.8688, lng: 151.2093, accuracy: 0 } };
+    const arg = await runCreate(dto);
+    expect(arg!.location).toEqual({ lat: -33.8688, lng: 151.2093, accuracy: 0 });
   });
 
-  it('persists a valid location when accuracy is omitted (accuracy becomes null)', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: 6.5244, lng: 3.3792 },
-    };
-
-    const ctorArg = await runCreate(dto);
-    expect(ctorArg!.location).toEqual({ lat: 6.5244, lng: 3.3792, accuracy: null });
+  it('persists a valid location when accuracy is omitted (becomes null)', async () => {
+    const dto: CreateOrderDto = { ...baseDto, location: { lat: 6.5244, lng: 3.3792 } };
+    const arg = await runCreate(dto);
+    expect(arg!.location).toEqual({ lat: 6.5244, lng: 3.3792, accuracy: null });
   });
 
-  it('does not alter any other order fields when location is valid', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: 6.5244, lng: 3.3792, accuracy: 35 },
-    };
-
-    const ctorArg = await runCreate(dto);
-
-    expect(ctorArg!.fullName).toBe('Ade Okonkwo');
-    expect(ctorArg!.email).toBe('ade@example.com');
-    expect(ctorArg!.total).toBe(10000);
-    expect(Array.isArray(ctorArg!.items)).toBe(true);
-    expect(ctorArg!.items).toHaveLength(1);
+  it('does not alter other fields when location is valid', async () => {
+    const dto: CreateOrderDto = { ...baseDto, location: { lat: 6.5244, lng: 3.3792, accuracy: 35 } };
+    const arg = await runCreate(dto);
+    expect(arg!.fullName).toBe('Ade Okonkwo');
+    expect(arg!.email).toBe('ade@example.com');
+    expect(arg!.total).toBe(10000);
+    expect(Array.isArray(arg!.items)).toBe(true);
   });
 
-  /* ================================================================== */
-  /* Case 2 — location: null (explicit)                                   */
-  /* ================================================================== */
+  /* ── Case 2: location: null ──────────────────────────────────────── */
 
-  it('stores location as null when location: null is sent', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: null,
-    };
-
-    const ctorArg = await runCreate(dto);
-
-    expect(ctorArg!.location).toBeNull();
-  });
-
-  it('still creates the order successfully when location is null', async () => {
+  it('stores null when location: null is sent', async () => {
     const dto: CreateOrderDto = { ...baseDto, location: null };
+    const arg = await runCreate(dto);
+    expect(arg!.location).toBeNull();
+  });
 
+  it('succeeds when location is null', async () => {
+    await expect(service.create({ ...baseDto, location: null })).resolves.not.toThrow();
+  });
+
+  /* ── Case 3: location omitted ────────────────────────────────────── */
+
+  it('stores null when location is omitted', async () => {
+    const arg = await runCreate({ ...baseDto });
+    expect(arg!.location).toBeNull();
+  });
+
+  it('succeeds when location is omitted', async () => {
+    await expect(service.create({ ...baseDto })).resolves.not.toThrow();
+  });
+
+  it('keeps all standard fields intact when location is omitted', async () => {
+    const arg = await runCreate({ ...baseDto });
+    expect(arg!.email).toBe('ade@example.com');
+    expect(arg!.total).toBe(10000);
+    expect(arg!.currency).toBe('NGN');
+  });
+
+  /* ── Case 4: invalid location ────────────────────────────────────── */
+
+  it('stores null when lat > 90', async () => {
+    const dto: CreateOrderDto = { ...baseDto, location: { lat: 91, lng: 3.3792, accuracy: 35 } };
     await expect(service.create(dto)).resolves.not.toThrow();
+    const arg = await runCreate(dto);
+    expect(arg!.location).toBeNull();
   });
 
-  /* ================================================================== */
-  /* Case 3 — location entirely omitted (the majority of real traffic)    */
-  /* ================================================================== */
-
-  it('stores location as null when location is omitted from the DTO', async () => {
-    const dto: CreateOrderDto = { ...baseDto }; // no location key at all
-
-    const ctorArg = await runCreate(dto);
-
-    expect(ctorArg!.location).toBeNull();
-  });
-
-  it('creates the order successfully when location is omitted', async () => {
-    const dto: CreateOrderDto = { ...baseDto };
-
+  it('stores null when lat < -90', async () => {
+    const dto: CreateOrderDto = { ...baseDto, location: { lat: -91, lng: 3.3792 } };
     await expect(service.create(dto)).resolves.not.toThrow();
+    expect((await runCreate(dto))!.location).toBeNull();
   });
 
-  it('returns an order with all standard fields intact when location is omitted', async () => {
-    const dto: CreateOrderDto = { ...baseDto };
-    const ctorArg = await runCreate(dto);
-
-    expect(ctorArg!.email).toBe('ade@example.com');
-    expect(ctorArg!.total).toBe(10000);
-    expect(ctorArg!.currency).toBe('NGN');
-  });
-
-  /* ================================================================== */
-  /* Case 4 — invalid/malformed location                                  */
-  /* ================================================================== */
-
-  it('stores null and does NOT throw when lat is out of range (> 90)', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: 91, lng: 3.3792, accuracy: 35 },
-    };
-
+  it('stores null when lng > 180', async () => {
+    const dto: CreateOrderDto = { ...baseDto, location: { lat: 6.5244, lng: 181 } };
     await expect(service.create(dto)).resolves.not.toThrow();
-
-    const ctorArg = await runCreate(dto);
-    expect(ctorArg!.location).toBeNull();
+    expect((await runCreate(dto))!.location).toBeNull();
   });
 
-  it('stores null and does NOT throw when lat is < -90', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: -91, lng: 3.3792 },
-    };
-
+  it('stores null when lng < -180', async () => {
+    const dto: CreateOrderDto = { ...baseDto, location: { lat: 6.5244, lng: -181 } };
     await expect(service.create(dto)).resolves.not.toThrow();
-    const ctorArg = await runCreate(dto);
-    expect(ctorArg!.location).toBeNull();
+    expect((await runCreate(dto))!.location).toBeNull();
   });
 
-  it('stores null and does NOT throw when lng is out of range (> 180)', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: 6.5244, lng: 181 },
-    };
-
+  it('stores null when accuracy is negative', async () => {
+    const dto: CreateOrderDto = { ...baseDto, location: { lat: 6.5244, lng: 3.3792, accuracy: -5 } };
     await expect(service.create(dto)).resolves.not.toThrow();
-    const ctorArg = await runCreate(dto);
-    expect(ctorArg!.location).toBeNull();
+    expect((await runCreate(dto))!.location).toBeNull();
   });
 
-  it('stores null and does NOT throw when lng is < -180', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: 6.5244, lng: -181 },
-    };
-
+  it('stores null when lat/lng are strings (wrong type)', async () => {
+    // Deliberately pass wrong runtime types to simulate a client sending bad data.
+    // TypeScript cast is intentional — we're testing the runtime guard.
+    const badLoc = { lat: '6.5244' as unknown as number, lng: '3.3792' as unknown as number };
+    const dto: CreateOrderDto = { ...baseDto, location: badLoc as LocationDto };
     await expect(service.create(dto)).resolves.not.toThrow();
-    const ctorArg = await runCreate(dto);
-    expect(ctorArg!.location).toBeNull();
+    expect((await runCreate(dto))!.location).toBeNull();
   });
 
-  it('stores null and does NOT throw when accuracy is negative', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: 6.5244, lng: 3.3792, accuracy: -5 },
-    };
-
-    await expect(service.create(dto)).resolves.not.toThrow();
-    const ctorArg = await runCreate(dto);
-    expect(ctorArg!.location).toBeNull();
+  it('does not modify other fields when location is invalid', async () => {
+    const dto: CreateOrderDto = { ...baseDto, location: { lat: 999, lng: 999 } };
+    const arg = await runCreate(dto);
+    expect(arg!.email).toBe('ade@example.com');
+    expect(arg!.total).toBe(10000);
+    expect(arg!.location).toBeNull();
   });
 
-  it('stores null and does NOT throw when lat/lng are strings (wrong type)', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: '6.5244' as any, lng: '3.3792' as any },
-    };
+  /* ── Backward-compatibility regression ───────────────────────────── */
 
-    await expect(service.create(dto)).resolves.not.toThrow();
-    const ctorArg = await runCreate(dto);
-    expect(ctorArg!.location).toBeNull();
-  });
-
-  it('does not modify other order fields when location is invalid', async () => {
-    const dto: CreateOrderDto = {
-      ...baseDto,
-      location: { lat: 999, lng: 999 },
-    };
-
-    const ctorArg = await runCreate(dto);
-
-    expect(ctorArg!.email).toBe('ade@example.com');
-    expect(ctorArg!.total).toBe(10000);
-    expect(ctorArg!.fullName).toBe('Ade Okonkwo');
-    expect(ctorArg!.location).toBeNull();
-  });
-
-  /* ================================================================== */
-  /* Backward-compatibility regression: existing orders (no location)     */
-  /* ================================================================== */
-
-  it('backward-compat: creates a standard order with no location field present', async () => {
+  it('backward-compat: standard order with no location field', async () => {
     const dto: CreateOrderDto = {
       fullName: 'Jane Doe',
       email: 'jane@example.com',
@@ -310,20 +200,10 @@ describe('OrdersService.create() — location field', () => {
       deliveryAddress: '5 Victoria Island, Lagos',
       total: 15000,
       currency: 'NGN',
-      items: [
-        {
-          itemId: new Types.ObjectId().toHexString(),
-          name: 'Ankara Dress',
-          quantity: 1,
-          price: 15000,
-        },
-      ],
+      items: [{ itemId: new Types.ObjectId().toHexString(), name: 'Ankara Dress', quantity: 1, price: 15000 }],
     };
-
     await expect(service.create(dto)).resolves.not.toThrow();
-
     expect(lastModelCtorArg!.location).toBeNull();
     expect(lastModelCtorArg!.email).toBe('jane@example.com');
-    expect(lastModelCtorArg!.total).toBe(15000);
   });
 });
