@@ -171,8 +171,6 @@ export class CreateOrderDto {
     description: "Optional customer geolocation captured at checkout time",
   })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => LocationDto)
   location?: LocationDto | null;
 }
 

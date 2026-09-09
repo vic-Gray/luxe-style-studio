@@ -11,7 +11,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import { PaymentsService } from "../services/payments.service";
-import { CreateOrderDto } from "@/orders/dto";
+import { InitializePaymentDto } from "../dto";
 import { Response, Request } from "express";
 import * as crypto from "crypto";
 
@@ -25,37 +25,35 @@ export class PaymentsController {
 
   /**
    * INITIALIZE PAYMENT
-   * Accepts full order data, creates the order, then initializes Paystack.
-   * Order is created with isPaid: false — only becomes visible after webhook/verify.
+   * Accepts an existing order ID and initializes Paystack payment.
+   * The order must have been created first via POST /api/orders.
    */
   @Post("initialize")
   @ApiOperation({
     summary: "Initialize payment",
-    description:
-      "Creates the order and initializes Paystack payment in one shot",
+    description: "Initializes Paystack payment for an existing order",
   })
   async initializePayment(
-    @Body() createOrderDto: CreateOrderDto,
+    @Body() initializePaymentDto: InitializePaymentDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    if (!createOrderDto.email) {
-      throw new Error("Email is required for payment initialization");
+    const order = await this.ordersService.findOne(
+      initializePaymentDto.orderId,
+    );
+
+    if (!order.email) {
+      throw new Error("Order email is required for payment initialization");
     }
-    if (!createOrderDto.total) {
+    if (!order.total) {
       throw new Error("Order total is required for payment initialization");
     }
 
-    // 1. Create the order (isPaid: false by default)
-    const order = await this.ordersService.create(createOrderDto);
-
-    // 2. Initialize Paystack
     const response = await this.paymentsService.initializePayment(
-      createOrderDto.email,
-      createOrderDto.total,
+      order.email,
+      order.total,
       order._id.toString(),
     );
 
-    // 3. Save Paystack reference on the order so webhook can find it later
     const reference = response.data?.data?.reference;
     if (reference) {
       await this.ordersService.updateStatus(order._id.toString(), {
@@ -65,7 +63,7 @@ export class PaymentsController {
 
     res.json({
       ...response.data,
-      orderId: order._id.toString(), // return orderId to frontend
+      orderId: order._id.toString(),
     });
   }
 
