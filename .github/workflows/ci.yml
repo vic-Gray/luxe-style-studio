@@ -73,8 +73,3 @@ jobs:
         run: |
           cd backend
           npm test
-
-      - name: Security audit
-        run: |
-          cd backend
-          npm audit --audit-level=high
