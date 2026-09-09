@@ -95,9 +95,9 @@ const AddSlideshow = () => {
         setShowSuccess(false);
         navigate("/admin/slideshow");
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to add slideshow:", err);
-      console.error("Response data:", err.response?.data); // ADD THIS LINE
+      console.error("Response data:", (err as { response?: { data?: unknown } })?.response?.data);
       const message = err.response?.data?.message || "Failed to add slideshow";
       alert(message);
     } finally {

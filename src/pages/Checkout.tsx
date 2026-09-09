@@ -6,6 +6,7 @@ import {
   CheckCircle,
   Loader2,
   ShoppingBag,
+  MapPin,
 } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
@@ -26,6 +27,14 @@ interface FormErrors {
   phone?: string;
   shippingAddress?: string;
 }
+
+interface CustomerLocation {
+  lat: number;
+  lng: number;
+  accuracy?: number;
+}
+
+type LocationStatus = "idle" | "loading" | "success" | "error";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -51,6 +60,54 @@ const Checkout = () => {
     useState(false);
 
   const [orderId, setOrderId] = useState("");
+
+  /* ---------------- LOCATION SHARING ---------------- */
+  const [location, setLocation] =
+    useState<CustomerLocation | null>(null);
+
+  const [locationStatus, setLocationStatus] =
+    useState<LocationStatus>("idle");
+
+  const [locationError, setLocationError] = useState("");
+
+  const handleShareLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus("error");
+      setLocationError(
+        "Geolocation isn't supported by your browser"
+      );
+      return;
+    }
+
+    setLocationStatus("loading");
+    setLocationError("");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+        setLocationStatus("success");
+      },
+      (error) => {
+        setLocationStatus("error");
+        setLocationError(
+          error.code === error.PERMISSION_DENIED
+            ? "Location permission denied. You can still check out without it."
+            : "Couldn't get your location. Please try again."
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        // Force a fresh GPS/network fix instead of a cached one — a
+        // cached fix is the most common reason the pin looks "off".
+        maximumAge: 0,
+      }
+    );
+  };
 
   /* ---------------- EMPTY CART ---------------- */
   if (items.length === 0 && !isOrderPlaced) {
@@ -172,6 +229,16 @@ const Checkout = () => {
 
         currency: "NGN",
 
+        // Customer's shared geolocation (optional — may be null
+        // if they declined or the browser doesn't support it)
+        location: location
+          ? {
+              lat: location.lat,
+              lng: location.lng,
+              accuracy: location.accuracy,
+            }
+          : null,
+
         items: items.map((item) => ({
           itemId: item.id,
 
@@ -284,14 +351,14 @@ const Checkout = () => {
       /* ---------------- REDIRECT TO PAYSTACK ---------------- */
       window.location.href =
         paymentUrl;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Checkout error:",
         err
       );
 
       setErrorMessage(
-        err.message ||
+        (err as Error).message ||
           "Something went wrong"
       );
     } finally {
@@ -352,7 +419,7 @@ const Checkout = () => {
 
       <MobileBottomNav />
 
-      <main className="pt-24 max-w-6xl mx-auto px-6 md:px-12 pb-24">
+      <main className="pt-28 md:pt-36 max-w-6xl mx-auto px-6 md:px-12 pb-24">
         {/* BACK BUTTON */}
         <motion.button
           onClick={() => navigate(-1)}
@@ -409,6 +476,96 @@ const Checkout = () => {
               }
               className="w-full p-3 border"
             />
+
+            {errors.shippingAddress && (
+              <p className="text-red-500 text-sm">
+                {errors.shippingAddress}
+              </p>
+            )}
+
+            {/* SHARE LOCATION */}
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleShareLocation}
+                disabled={locationStatus === "loading"}
+                className="flex items-center gap-2 text-sm border px-3 py-2 hover:bg-muted/50 disabled:opacity-60"
+              >
+                {locationStatus === "loading" ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : locationStatus === "success" ? (
+                  <CheckCircle size={16} className="text-green-600" />
+                ) : (
+                  <MapPin size={16} />
+                )}
+
+                {locationStatus === "success"
+                  ? "Location Shared"
+                  : "Share My Location"}
+              </button>
+
+              <p className="text-xs text-muted-foreground">
+                Sharing your location helps our riders find you
+                faster. This is optional.
+              </p>
+
+              {locationStatus === "success" && location && (
+                <div className="space-y-2">
+                  {/* MAP PREVIEW — lets the customer actually see the
+                      pin and confirm it's right before paying, instead
+                      of trusting a raw pair of numbers. */}
+                  <div className="rounded-lg overflow-hidden border h-48">
+                    <iframe
+                      title="Your shared location"
+                      width="100%"
+                      height="100%"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://maps.google.com/maps?q=${location.lat},${location.lng}&z=16&output=embed`}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-green-600">
+                      Location captured
+                      {typeof location.accuracy === "number" &&
+                        ` (accurate to ±${Math.round(
+                          location.accuracy
+                        )}m)`}
+                    </p>
+
+                    <a
+                      href={`https://www.google.com/maps?q=${location.lat},${location.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 underline"
+                    >
+                      Open in Google Maps
+                    </a>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    Pin looks off? GPS accuracy can vary by device and
+                    signal — try re-sharing from a phone outdoors, or
+                    just rely on the address above.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleShareLocation}
+                    className="text-xs text-muted-foreground underline"
+                  >
+                    Re-share location
+                  </button>
+                </div>
+              )}
+
+              {locationStatus === "error" && (
+                <p className="text-xs text-red-500">
+                  {locationError}
+                </p>
+              )}
+            </div>
 
             <textarea
               name="note"

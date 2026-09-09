@@ -26,7 +26,7 @@ export class AdminController {
   @Delete("dashboard/clear")
   @ApiOperation({
     summary: "Clear dashboard activity",
-    description: "Deletes only dashboard activity logs", 
+    description: "Deletes only dashboard activity logs",
   })
   @ApiResponse({
     status: 200,

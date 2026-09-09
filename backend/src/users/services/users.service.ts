@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import * as bcrypt from 'bcrypt';
-import { User } from '../entities/user.entity';
-import { CreateUserDto, UpdateUserDto } from '../dto';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
+import * as bcrypt from "bcrypt";
+import { User } from "../entities/user.entity";
+import { CreateUserDto, UpdateUserDto } from "../dto";
 
 /**
  * UsersService - Handles user-related business logic
@@ -13,13 +17,18 @@ export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const existingUser = await this.userModel.findOne({ email: createUserDto.email });
+    const existingUser = await this.userModel.findOne({
+      email: createUserDto.email,
+    });
     if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException("User with this email already exists");
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const user = new this.userModel({ ...createUserDto, password: hashedPassword });
+    const user = new this.userModel({
+      ...createUserDto,
+      password: hashedPassword,
+    });
     return user.save();
   }
 
@@ -40,7 +49,7 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.userModel.findById(id).populate('orders');
+    const user = await this.userModel.findById(id).populate("orders");
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
@@ -120,7 +129,7 @@ export class UsersService {
         city: userData.city,
         country: userData.country,
         postalCode: userData.postalCode,
-        role: 'customer',
+        role: "customer",
         isActive: true,
         orders: [],
       });
@@ -149,7 +158,7 @@ export class UsersService {
   /**
    * Get user with order count
    */
-  async findOneWithOrderCount(id: string): Promise<any> {
+  async findOneWithOrderCount(id: string): Promise<Record<string, unknown>> {
     const user = await this.userModel.findById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -166,14 +175,14 @@ export class UsersService {
    */
   async findAllWithOrderCounts(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
-    
+
     const [data, total] = await Promise.all([
       this.userModel.find().skip(skip).limit(limit).sort({ createdAt: -1 }),
       this.userModel.countDocuments(),
     ]);
 
     // Add order count to each user
-    const usersWithCounts = data.map(user => ({
+    const usersWithCounts = data.map((user) => ({
       ...user.toObject(),
       orderCount: user.orders?.length || 0,
     }));

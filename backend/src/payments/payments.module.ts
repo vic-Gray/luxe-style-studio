@@ -1,10 +1,10 @@
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { PaymentsController } from './controllers/payments.controller';
-import { PaymentsService } from './services/payments.service';
-import { Payment, PaymentSchema } from './entities/payment.entity';
-import { OrdersModule } from '../orders/orders.module';
-import { JwtModule } from '@nestjs/jwt';
+import { Module } from "@nestjs/common";
+import { MongooseModule } from "@nestjs/mongoose";
+import { PaymentsController } from "./controllers/payments.controller";
+import { PaymentsService } from "./services/payments.service";
+import { Payment, PaymentSchema } from "./entities/payment.entity";
+import { OrdersModule } from "../orders/orders.module";
+import { JwtModule } from "@nestjs/jwt";
 
 /**
  * PaymentsModule - Handles payment management operations
@@ -14,9 +14,9 @@ import { JwtModule } from '@nestjs/jwt';
   imports: [
     MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
 
-       JwtModule.register({
-      secret: process.env.JWT_SECRET || 'supersecretkey',
-      signOptions: { expiresIn: '7d' },
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || "supersecretkey",
+      signOptions: { expiresIn: "7d" },
     }),
     OrdersModule,
   ],

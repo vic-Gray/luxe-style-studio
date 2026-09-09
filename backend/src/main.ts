@@ -1,49 +1,91 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import * as express from 'express';
+import { NestFactory } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { AppModule } from "./app.module";
+import helmet from "helmet";
+import * as express from "express";
+import mongoSanitize from "express-mongo-sanitize";
+import rateLimit from "express-rate-limit";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
-  // ✅ Raw body middleware for Paystack webhook signature verification
-  app.use((req: any, res: any, next: any) => {
-    if (req.path === '/payments/webhook' && req.method === 'POST') {
-      let body = '';
-      req.on('data', (chunk: Buffer) => {
-        body += chunk.toString();
-      });
-      req.on('end', () => {
-        req.rawBody = body;
-        try {
-          req.body = JSON.parse(body);
-        } catch {
-          req.body = {};
-        }
+  app.use(
+    (
+      req: express.Request & { rawBody?: string },
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      if (req.path === "/payments/webhook" && req.method === "POST") {
+        let body = "";
+        req.on("data", (chunk: Buffer) => {
+          body += chunk.toString();
+        });
+        req.on("end", () => {
+          req.rawBody = body;
+          try {
+            req.body = JSON.parse(body);
+          } catch {
+            req.body = {};
+          }
+          next();
+        });
+      } else {
         next();
-      });
-    } else {
-      next();
-    }
-  });
+      }
+    },
+  );
 
-  // ✅ Global body-parser for all other routes (enabled after webhook middleware)
-  app.use(express.json());
+  app.use(express.json({ limit: "10kb" }));
 
-  // ✅ Enable CORS (Configured for development and production)
-  const frontendUrl = process.env.FRONTEND_URL;
+  app.use(mongoSanitize());
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", "data:", "https:"],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
+        },
+      },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+    }),
+  );
+
+  const allowedOrigins = [
+    "https://matteekay.com",
+    "https://www.matteekay.com",
+    "https://mattekay.onrender.com",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+  ];
+
   app.enableCors({
-    origin: frontendUrl ? frontendUrl : true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
 
-  // ✅ Global API prefix
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix("api");
 
-  // ✅ Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -55,34 +97,48 @@ async function bootstrap() {
     }),
   );
 
-  // ✅ Swagger documentation setup
-  const config = new DocumentBuilder()
-    .setTitle('matteekay Studio API')
-    .setDescription('welcome to matteekay API documentation')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addTag('auth', 'Authentication endpoints')
-    .addTag('items', 'Items management')
-    .addTag('product-variants', 'Product variants management')
-    .addTag('users', 'Users management')
-    .addTag('orders', 'Orders management')
-    .addTag('payments', 'Payments management')
-    .addTag('admin', 'Admin dashboard')
-    .addTag('slideshow', 'Slideshow management')
-    .build();
+  const apiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      status: 429,
+      error: "Too many requests, please try again later.",
+    },
+  });
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  app.use("/api", apiLimiter);
 
-  // ✅ Start server
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (!isProduction) {
+    const config = new DocumentBuilder()
+      .setTitle("matteekay Studio API")
+      .setDescription("welcome to matteekay API documentation")
+      .setVersion("1.0")
+      .addBearerAuth()
+      .addTag("auth", "Authentication endpoints")
+      .addTag("items", "Items management")
+      .addTag("product-variants", "Product variants management")
+      .addTag("users", "Users management")
+      .addTag("orders", "Orders management")
+      .addTag("payments", "Payments management")
+      .addTag("admin", "Admin dashboard")
+      .addTag("slideshow", "Slideshow management")
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup("api/docs", app, document);
+  }
+
   const port = process.env.PORT || 3001;
   await app.listen(port);
 
   console.log(`🚀 Server running on http://localhost:${port}`);
-  console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+  if (!isProduction) {
+    console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+  }
 }
 
 bootstrap();
-
-
-

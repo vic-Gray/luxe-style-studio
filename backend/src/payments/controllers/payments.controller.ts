@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common";
 import { PaymentsService } from "../services/payments.service";
 import { CreateOrderDto } from "@/orders/dto";
-import { Response } from "express";
+import { Response, Request } from "express";
 import * as crypto from "crypto";
 
 @ApiTags("payments")
@@ -75,16 +75,14 @@ export class PaymentsController {
   @Get("verify")
   @ApiOperation({
     summary: "Verify payment",
-    description:
-      "Verify payment status via Paystack and mark order as paid",
+    description: "Verify payment status via Paystack and mark order as paid",
   })
   async verify(@Query("reference") reference: string) {
     const result = await this.paymentsService.verifyPayment(reference);
     const paystackData = result.data;
 
     if (paystackData.status === "success") {
-      const order =
-        await this.ordersService.findByPaystackReference(reference);
+      const order = await this.ordersService.findByPaystackReference(reference);
       await this.ordersService.markAsPaid(order._id.toString());
       return { success: true, orderId: order._id.toString(), reference };
     }
@@ -100,7 +98,13 @@ export class PaymentsController {
     summary: "Paystack webhook",
     description: "Handle Paystack charge.success webhook events",
   })
-  async webhook(@Req() req: any) {
+  async webhook(
+    @Req()
+    req: Request & {
+      rawBody?: string;
+      body?: { event?: string; data?: { reference?: string } };
+    },
+  ) {
     const logger = new Logger("PaymentsController");
 
     const paystackSignature = req.headers["x-paystack-signature"];
@@ -126,13 +130,16 @@ export class PaymentsController {
 
     try {
       if (event === "charge.success") {
-        const reference = data?.reference; 
+        const reference = data?.reference;
         if (reference) {
           const order =
             await this.ordersService.findByPaystackReference(reference);
-          if (!order.isPaid) { // idempotent — skip if already paid
+          if (!order.isPaid) {
+            // idempotent — skip if already paid
             await this.ordersService.markAsPaid(order._id.toString());
-            logger.log(`Order ${order._id.toString()} marked as paid via webhook`);
+            logger.log(
+              `Order ${order._id.toString()} marked as paid via webhook`,
+            );
           }
         }
       }

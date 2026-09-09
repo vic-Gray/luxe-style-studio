@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Filter, MoreHorizontal } from "lucide-react";
+import { Search, Filter, MoreHorizontal, MapPin } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,11 @@ interface OrderItem {
   size?: string;
 }
 
+interface GeoLocation {
+  lat: number;
+  lng: number;
+}
+
 interface Order {
   _id: string;
   userId?: User;
@@ -59,6 +64,7 @@ interface Order {
   email?: string;
   phone?: string;
   shippingAddress: string;
+  location?: GeoLocation | null;
   createdAt: string;
 }
 
@@ -73,6 +79,7 @@ interface DisplayOrder {
   email: string;
   phone: string;
   shippingAddress: string;
+  location: GeoLocation | null;
   createdAt: string;
   date: string;
 }
@@ -143,6 +150,7 @@ const Orders = () => {
         email: o.userId?.email || o.email || "N/A",
         phone: o.userId?.phone || o.phone || "N/A",
         shippingAddress: o.shippingAddress || "N/A",
+        location: o.location ?? null,
         createdAt: o.createdAt,
         date: new Date(o.createdAt).toLocaleDateString(),
       }));
@@ -296,7 +304,18 @@ const Orders = () => {
 
                         <TableCell>
                           <div>
-                            <p>{order.fullName}</p>
+                            <p className="flex items-center gap-1">
+                              {order.fullName}
+                              {order.location && (
+                                <MapPin
+                                  size={12}
+                                  className="text-green-600"
+                                  aria-label="Location shared"
+                                >
+                                  <title>Location shared</title>
+                                </MapPin>
+                              )}
+                            </p>
                             <p className="text-xs text-gray-500">
                               {order.email}
                             </p>

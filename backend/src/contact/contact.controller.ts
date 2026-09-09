@@ -1,10 +1,8 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ContactService } from './contact.service';
-import { ContactDto } from './dto/create-contact.dto';
+import { Body, Controller, Post } from "@nestjs/common";
+import { ContactService } from "./contact.service";
+import { ContactDto } from "./dto/create-contact.dto";
 
-
-
-@Controller('contact')
+@Controller("contact")
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 

@@ -1,14 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Rating } from './entities/rating.entity';
-import { CreateRatingDto } from './dto/create-rating.dto';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { Rating } from "./entities/rating.entity";
+import { CreateRatingDto } from "./dto/create-rating.dto";
 
 @Injectable()
 export class RatingsService {
-  constructor(
-    @InjectModel(Rating.name) private ratingModel: Model<Rating>,
-  ) {}
+  constructor(@InjectModel(Rating.name) private ratingModel: Model<Rating>) {}
 
   /**
    * Create a new rating or update existing one for a user and item
@@ -48,7 +50,9 @@ export class RatingsService {
    * @param itemId - ID of the item
    * @returns Average rating and count
    */
-  async getItemRating(itemId: string): Promise<{ average: number; count: number }> {
+  async getItemRating(
+    itemId: string,
+  ): Promise<{ average: number; count: number }> {
     const ratings = await this.ratingModel.find({ itemId });
     if (ratings.length === 0) {
       return { average: 0, count: 0 };

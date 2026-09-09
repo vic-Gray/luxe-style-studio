@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { ItemsService } from '../../items/services/items.service';
-import { UsersService } from '../../users/services/users.service';
-import { OrdersService } from '../../orders/services/orders.service';
-import { PaymentsService } from '../../payments/services/payments.service';
+import { Injectable } from "@nestjs/common";
+import { ItemsService } from "../../items/services/items.service";
+import { UsersService } from "../../users/services/users.service";
+import { OrdersService } from "../../orders/services/orders.service";
+import { PaymentsService } from "../../payments/services/payments.service";
 
 @Injectable()
 export class AdminService {
@@ -45,47 +45,49 @@ export class AdminService {
         this.ordersService.findAll(1, 5),
       ]);
 
-    const ordersToday = await this.ordersService['orderModel'].countDocuments({
+    const ordersToday = await this.ordersService["orderModel"].countDocuments({
       isPaid: true,
       createdAt: { $gte: startOfToday },
     });
 
-    const ordersYesterday =
-      await this.ordersService['orderModel'].countDocuments({
-        isPaid: true,
-        createdAt: { $gte: startOfYesterday, $lt: startOfToday },
-      });
+    const ordersYesterday = await this.ordersService[
+      "orderModel"
+    ].countDocuments({
+      isPaid: true,
+      createdAt: { $gte: startOfYesterday, $lt: startOfToday },
+    });
 
-    const salesTodayAgg = await this.ordersService['orderModel'].aggregate([
+    const salesTodayAgg = await this.ordersService["orderModel"].aggregate([
       { $match: { isPaid: true, createdAt: { $gte: startOfToday } } },
-      { $group: { _id: null, total: { $sum: '$total' } } },
+      { $group: { _id: null, total: { $sum: "$total" } } },
     ]);
 
-    const salesYesterdayAgg =
-      await this.ordersService['orderModel'].aggregate([
-        {
-          $match: {
-            isPaid: true,
-            createdAt: { $gte: startOfYesterday, $lt: startOfToday },
-          },
+    const salesYesterdayAgg = await this.ordersService["orderModel"].aggregate([
+      {
+        $match: {
+          isPaid: true,
+          createdAt: { $gte: startOfYesterday, $lt: startOfToday },
         },
-        { $group: { _id: null, total: { $sum: '$total' } } },
-      ]);
+      },
+      { $group: { _id: null, total: { $sum: "$total" } } },
+    ]);
 
     const salesToday = salesTodayAgg[0]?.total || 0;
     const salesYesterday = salesYesterdayAgg[0]?.total || 0;
 
-    const ordersThisWeek =
-      await this.ordersService['orderModel'].countDocuments({
-        isPaid: true,
-        createdAt: { $gte: startOfWeek },
-      });
+    const ordersThisWeek = await this.ordersService[
+      "orderModel"
+    ].countDocuments({
+      isPaid: true,
+      createdAt: { $gte: startOfWeek },
+    });
 
-    const ordersLastWeek =
-      await this.ordersService['orderModel'].countDocuments({
-        isPaid: true,
-        createdAt: { $gte: startOfLastWeek, $lt: startOfWeek },
-      });
+    const ordersLastWeek = await this.ordersService[
+      "orderModel"
+    ].countDocuments({
+      isPaid: true,
+      createdAt: { $gte: startOfLastWeek, $lt: startOfWeek },
+    });
 
     return {
       totalSales,
@@ -118,12 +120,12 @@ export class AdminService {
   /* ---------------- CLEAR ACTIVITY ---------------- */
 
   async clearAllDashboardData() {
-    const result = await this.ordersService['orderModel']
-      .db.collection('activities')
+    const result = await this.ordersService["orderModel"].db
+      .collection("activities")
       .deleteMany({});
 
     return {
-      message: 'Dashboard activity cleared',
+      message: "Dashboard activity cleared",
       deleted: {
         activities: result.deletedCount,
       },

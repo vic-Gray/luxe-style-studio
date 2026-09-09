@@ -1,9 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
-import { AuthService } from '../services/auth.service';
-import { JwtPayload } from '../../common/interfaces';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { PassportStrategy } from "@nestjs/passport";
+import { ExtractJwt, Strategy } from "passport-jwt";
+import { ConfigService } from "@nestjs/config";
+import { AuthService } from "../services/auth.service";
+import { JwtPayload } from "../../common/interfaces";
 
 /**
  * JWT Strategy for Passport authentication
@@ -18,7 +18,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET') || 'default-secret-change-in-production',
+      secretOrKey:
+        configService.get<string>("JWT_SECRET") ||
+        "default-secret-change-in-production",
     });
   }
 
@@ -29,9 +31,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    */
   async validate(payload: JwtPayload): Promise<JwtPayload> {
     const admin = await this.authService.validateToken(payload);
-    
+
     if (!admin) {
-      throw new UnauthorizedException('Invalid token or admin not found');
+      throw new UnauthorizedException("Invalid token or admin not found");
     }
 
     return payload;

@@ -14,8 +14,8 @@ const CollectionSection = () => {
       try {
         const data = await fetchOutfits(1, 20);
         setOutfits(data);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch items.");
+      } catch (err: unknown) {
+        setError((err as Error).message || "Failed to fetch items.");
       } finally {
         setLoading(false);
       }

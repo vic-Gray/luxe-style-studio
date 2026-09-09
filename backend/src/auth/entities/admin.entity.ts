@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 @Schema({ timestamps: true })
 export class Admin extends Document {
@@ -9,7 +9,7 @@ export class Admin extends Document {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ default: 'admin' })
+  @Prop({ default: "admin" })
   role: string;
 
   @Prop()

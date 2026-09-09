@@ -1,13 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { ProductVariant } from '../entities/product-variant.entity';
-import { CreateProductVariantDto, UpdateProductVariantDto } from '../dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
+import { ProductVariant } from "../entities/product-variant.entity";
+import { CreateProductVariantDto, UpdateProductVariantDto } from "../dto";
 
 @Injectable()
 export class ProductVariantsService {
   constructor(
-    @InjectModel(ProductVariant.name) private productVariantModel: Model<ProductVariant>,
+    @InjectModel(ProductVariant.name)
+    private productVariantModel: Model<ProductVariant>,
   ) {}
 
   async create(createDto: CreateProductVariantDto): Promise<ProductVariant> {
@@ -38,12 +39,20 @@ export class ProductVariantsService {
     return variant;
   }
 
-  async update(id: string, updateDto: UpdateProductVariantDto): Promise<ProductVariant> {
+  async update(
+    id: string,
+    updateDto: UpdateProductVariantDto,
+  ): Promise<ProductVariant> {
+    const updateData: Record<string, unknown> = { ...updateDto };
     if (updateDto.productId) {
-      updateDto.productId = new Types.ObjectId(updateDto.productId) as any;
+      updateData.productId = new Types.ObjectId(updateDto.productId);
     }
     const variant = await this.productVariantModel
-      .findByIdAndUpdate(id, { $set: updateDto }, { new: true, runValidators: true })
+      .findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true, runValidators: true },
+      )
       .exec();
     if (!variant) {
       throw new NotFoundException(`ProductVariant with ID ${id} not found`);

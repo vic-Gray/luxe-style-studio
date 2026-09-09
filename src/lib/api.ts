@@ -2,7 +2,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // ─── Generic helper ───────────────────────────────────────────────────────────
 
-export const apiFetch = async <T = any>(
+export const apiFetch = async <T = unknown>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> => {
@@ -19,15 +19,15 @@ export const apiFetch = async <T = any>(
     if (!res.ok) {
       let errorMessage = "Something went wrong";
       try {
-        const errData = await res.json();
+        const errData = await res.json() as { message?: string };
         errorMessage = errData.message || errorMessage;
       } catch { /* ignore JSON parse error */ }
       throw new Error(errorMessage);
     }
 
-    return res.json();
-  } catch (error: any) {
-    console.error("API ERROR:", error.message);
+    return res.json() as Promise<T>;
+  } catch (error: unknown) {
+    console.error("API ERROR:", (error as Error).message);
     throw error;
   }
 };

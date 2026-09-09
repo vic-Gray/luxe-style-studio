@@ -117,9 +117,9 @@ const AddItem = () => {
         setShowSuccess(false);
         navigate("/admin/items");
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to add item:", err);
-      alert(err.response?.data?.message || "Failed to add item");
+      alert((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to add item");
     } finally {
       setIsSubmitting(false);
     }

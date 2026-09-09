@@ -49,9 +49,9 @@ const handleSubmit = async (e: FormEvent) => {
       email: "",
       message: "",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Contact form error:", error);
-    toast.error(error.message || "Something went wrong");
+    toast.error((error as Error).message || "Something went wrong");
   }
 
 

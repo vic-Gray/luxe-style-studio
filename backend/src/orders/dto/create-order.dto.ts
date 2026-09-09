@@ -10,6 +10,39 @@ import {
 import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
+/**
+ * DTO for the optional customer geolocation payload.
+ *
+ * This is validated loosely so that an invalid/partial location never
+ * blocks the whole order: the service layer calls validateLocation() and
+ * silently drops to null on any constraint violation.
+ *
+ * All three fields are optional at the DTO level because the client may
+ * omit accuracy (older bundle) or send partial data.
+ */
+export class LocationDto {
+  @ApiPropertyOptional({ description: "Latitude (-90 to 90)", example: 6.5244 })
+  @IsOptional()
+  @IsNumber()
+  lat?: number;
+
+  @ApiPropertyOptional({
+    description: "Longitude (-180 to 180)",
+    example: 3.3792,
+  })
+  @IsOptional()
+  @IsNumber()
+  lng?: number;
+
+  @ApiPropertyOptional({
+    description: "GPS accuracy in metres (≥ 0)",
+    example: 35,
+  })
+  @IsOptional()
+  @IsNumber()
+  accuracy?: number;
+}
+
 export class OrderItemDto {
   @ApiProperty()
   @IsString()
@@ -121,6 +154,26 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  /**
+   * Optional customer geolocation.
+   *
+   * The client may send `location: null` (user declined), omit the field
+   * entirely (old bundle / API consumer), or send a full `{lat, lng, accuracy}`
+   * object. All three cases are valid at the DTO level. The service layer runs
+   * validateLocation() and drops the value to null if coordinates are
+   * out of range or the wrong type — the order is NEVER rejected because of
+   * a bad location.
+   */
+  @ApiPropertyOptional({
+    type: () => LocationDto,
+    nullable: true,
+    description: "Optional customer geolocation captured at checkout time",
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LocationDto)
+  location?: LocationDto | null;
 }
 
 export class UpdateOrderStatusDto {
