@@ -7,6 +7,7 @@ import {
   Param,
   Query,
   UseGuards,
+  Post,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -16,14 +17,25 @@ import {
   ApiQuery,
 } from "@nestjs/swagger";
 import { OrdersService } from "../services/orders.service";
-import { UpdateOrderStatusDto } from "../dto";
+import { CreateOrderDto, UpdateOrderStatusDto } from "../dto";
 import { JwtAuthGuard, RolesGuard } from "../../common/guards";
-import { Roles } from "../../common/decorators";
+import { Roles, Public } from "../../common/decorators";
 
 @ApiTags("orders")
 @Controller("orders")
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  @Public()
+  @Post()
+  @ApiOperation({
+    summary: "Create order",
+    description: "Create a new order (payment is initialized separately)",
+  })
+  @ApiResponse({ status: 201, description: "Order created successfully" })
+  async create(@Body() createOrderDto: CreateOrderDto) {
+    return this.ordersService.create(createOrderDto);
+  }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin")
